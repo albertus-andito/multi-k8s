@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t aandito/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true aandito/react-test npm test
+
+after_success:
+  - docker build -t aandito/multi-client ./client
+  - docker build -t aandito/multi-nginx ./nginx 
+  - docker build -t aandito/multi-server ./server 
+  - docker build -t aandito/multi-worker ./worker 
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push aandito/multi-client
+  - docker push aandito/multi-nginx
+  - docker push aandito/multi-server
+  - docker push aandito/multi-worker
